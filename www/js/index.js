@@ -68,7 +68,7 @@ var app = {
                 "password": "8symbols2NtM6oOXtkdr3mSgCcHiuxQSN"
             },
             function (data) {
-                console.log("data", data);
+                console.log("data", JSON.stringify(data));
             }
         );
         /*$.ajax({

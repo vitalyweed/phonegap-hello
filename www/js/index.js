@@ -52,10 +52,41 @@ var kendoapp = null;
 
 var app = {
     initialize: function () {
-        this.kendoInit();
+        //this.kendoInit();
+        this.helloInit();
     },
     kendoInit: function () {
         kendoapp = new kendo.mobile.Application(document.body);
+    },
+    helloInit: function () {
+        $.post("https://login.salesforce.com/services/oauth2/token",
+            {
+                "grant_type": "password",
+                "client_id": "3MVG9A2kN3Bn17htQoJPG8gZv26_hSm8n.iXxJwxNt2rRcJxDdNvFgutSJauwgh3WwQ_5_rf4cjLGfRv2I1sq",
+                "client_secret": "1577604407378633977",
+                "username": "vdolgov@example.com",
+                "password": "8symbols2NtM6oOXtkdr3mSgCcHiuxQSN"
+            },
+            function (data) {
+                console.log("data", data);
+            }
+        );
+        /*$.ajax({
+            url: "https://login.salesforce.com/services/oauth2/token",
+            type: "POST",
+            data: {
+                "grant_type": "password",
+                "client_id": "3MVG9A2kN3Bn17htQoJPG8gZv26_hSm8n.iXxJwxNt2rRcJxDdNvFgutSJauwgh3WwQ_5_rf4cjLGfRv2I1sq",
+                "client_secret": "1577604407378633977",
+                "username": "vdolgov@example.com",
+                "password": "8symbols2NtM6oOXtkdr3mSgCcHiuxQSN"
+            },
+            //headers: { 'Access-Control-Allow-Origin': '*' },
+            dataType: "json",
+            success: function (data) {
+                console.log(data);
+            }
+        });*/
     }
 }
 
@@ -65,4 +96,8 @@ initViewHello = function (e) {
         mobile: "phone",
         height: window.innerHeight
     });
+}
+
+fetchEvents = function () {
+    
 }

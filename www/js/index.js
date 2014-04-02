@@ -61,5 +61,7 @@ var app = {
 
 initViewHello = function (e) {
     console.log("initViewHello");
-    $("#scheduler").kendoScheduler();
+    $("#scheduler").kendoScheduler({
+        mobile: "phone"
+    });
 }

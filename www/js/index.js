@@ -48,56 +48,201 @@
     }
 };*/
 
+var API_AGE = 2;
+
 var kendoapp = null;
+var eventDataSource = null;
+
+var token = null;
+var instanceUrl = null;
+var apiUrl = null;
+var services = null;
 
 var app = {
     initialize: function () {
-        //this.kendoInit();
-        this.helloInit();
+        this.initKendo();
+        this.initConnection();
     },
-    kendoInit: function () {
+    initKendo: function () {
         kendoapp = new kendo.mobile.Application(document.body);
     },
-    helloInit: function () {
-        $.post("https://login.salesforce.com/services/oauth2/token",
-            {
-                "grant_type": "password",
-                "client_id": "3MVG9A2kN3Bn17htQoJPG8gZv26_hSm8n.iXxJwxNt2rRcJxDdNvFgutSJauwgh3WwQ_5_rf4cjLGfRv2I1sq",
-                "client_secret": "1577604407378633977",
-                "username": "vdolgov@example.com",
-                "password": "8symbols2NtM6oOXtkdr3mSgCcHiuxQSN"
-            },
-            function (data) {
-                console.log("data", JSON.stringify(data));
-            }
-        );
-        /*$.ajax({
-            url: "https://login.salesforce.com/services/oauth2/token",
-            type: "POST",
-            data: {
-                "grant_type": "password",
-                "client_id": "3MVG9A2kN3Bn17htQoJPG8gZv26_hSm8n.iXxJwxNt2rRcJxDdNvFgutSJauwgh3WwQ_5_rf4cjLGfRv2I1sq",
-                "client_secret": "1577604407378633977",
-                "username": "vdolgov@example.com",
-                "password": "8symbols2NtM6oOXtkdr3mSgCcHiuxQSN"
-            },
-            //headers: { 'Access-Control-Allow-Origin': '*' },
-            dataType: "json",
-            success: function (data) {
-                console.log(data);
-            }
-        });*/
+    initConnection: function () {
+        initConnection();
     }
 }
 
+//
+
 initViewHello = function (e) {
     console.log("initViewHello");
+    initEventDataSource();
     $("#scheduler").kendoScheduler({
         mobile: "phone",
-        height: window.innerHeight
+        height: window.innerHeight,
+        dataSource: getEventDataSource()
     });
 }
 
-fetchEvents = function () {
-    
+//
+
+initConnection = function () {
+    console.log("init connection");
+    getSalesforceApis(function (data) {
+        setApiUrl(data[data.length-API_AGE].url);
+        getSalesforceToken(function (data) {
+            setToken(data.access_token);
+            setInstanceUrl(data.instance_url);
+            getSalesforceServices(getInstanceUrl(), getApiUrl(), getToken(), initData);
+        });
+    });
+}
+
+initData = function () {
+    console.log("init data");
+    querySalesforceEvents(function (data) {
+        setEventDataSource(data.records);
+    });
+}
+
+//
+
+getSalesforceApis = function (callback) {
+    console.log("get APIs");
+    $.ajax({
+        type: "GET",
+        url: "https://na1.salesforce.com/services/data/",
+        dataType: "json",
+        success: function (response) {
+            console.log("success", response);
+            if (callback) { callback(response); }
+        },
+        error: function (response) {
+          console.log("error", response);
+        }
+    });
+}
+
+getSalesforceToken = function (callback) {
+    console.log("get token");
+    $.post("https://login.salesforce.com/services/oauth2/token",
+        {
+            "grant_type": "password",
+            "client_id": "3MVG9A2kN3Bn17htQoJPG8gZv26_hSm8n.iXxJwxNt2rRcJxDdNvFgutSJauwgh3WwQ_5_rf4cjLGfRv2I1sq",
+            "client_secret": "1577604407378633977",
+            "username": "vdolgov@example.com",
+            "password": "8symbols2NtM6oOXtkdr3mSgCcHiuxQSN"
+        },
+        function (response) {
+            console.log("data", JSON.stringify(response));
+            if (callback) { callback(response); }
+        }
+    );
+}
+
+getSalesforceServices = function (instanceUrl, apiUrl, token, callback) {
+    console.log("get services");
+    $.ajax({
+        type: "GET",
+        url: instanceUrl + apiUrl,
+        dataType: "json",
+        headers: {
+          "Authorization": "Bearer " + token
+        },
+        success: function (response) {
+            console.log("success", response);
+            setServices(response);
+            if (callback) { callback(response) };
+        },
+        error: function (response) {
+            console.log("error", response);
+        }
+    });
+}
+
+//
+
+querySalesforce = function (query, callback) {
+    console.log("query: " + query);
+    $.ajax({
+        type: "GET",
+        url: getInstanceUrl() + getServiceByName("query") + "?q=" + query,
+        dataType: "json",
+        headers: {
+          "Authorization": "Bearer " + getToken()
+        },
+        success: function (response) {
+            console.log("success", response);
+            if (callback) { callback(response); }
+        },
+        error: function (response) {
+            console.log("error", response);
+        }
+    });
+}
+
+//
+
+querySalesforceEvents = function (callback) {
+    querySalesforce("SELECT Id,Name,Start__c,End__c FROM Event__c", callback);
+}
+
+//
+
+setToken = function (data) {
+    token = data;
+    console.log("new token", token);
+}
+getToken = function () {
+    return token;
+}
+
+//
+
+setInstanceUrl = function (data) {
+    instanceUrl = data;
+    console.log("new instance URL", instanceUrl);
+}
+getInstanceUrl = function () {
+    return instanceUrl;
+}
+
+//
+
+setApiUrl = function (data) {
+    apiUrl = data;
+    console.log("new API URL", apiUrl);
+}
+getApiUrl = function () {
+    return apiUrl;
+}
+
+//
+
+setServices = function (data) {
+    services = data;
+    console.log("new services", JSON.stringify(services));
+}
+getServices = function () {
+    return services;
+}
+getServiceByName = function (name) {
+    return services[name];
+}
+
+//
+
+initEventDataSource = function () {
+    eventDataSource = new kendo.data.SchedulerDataSource();
+}
+setEventDataSource = function (data) {
+    for (var i=0; i<data.length; i++) {
+        data[i].title = data[i].Name;
+        data[i].start = new Date(data[i].Start__c);
+        data[i].end = new Date(data[i].End__c);
+    }
+    eventDataSource.data(data);
+    console.log("new event data source", JSON.stringify(data));
+}
+getEventDataSource = function () {
+    return eventDataSource;
 }
